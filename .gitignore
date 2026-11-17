@@ -1,1 +1,5 @@
 .taste-skill/
+*.bak
+brief*.txt
+codex*.txt
+run*.cmd
