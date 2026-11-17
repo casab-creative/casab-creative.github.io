@@ -36,6 +36,7 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
@@ -48,7 +49,7 @@
     }
     img { display: block; max-width: 100%; }
     a { color: inherit; }
-    button { font: inherit; }
+    button { font: inherit; cursor: pointer; }
     :focus-visible {
       outline: 3px solid var(--brass);
       outline-offset: 4px;
@@ -116,6 +117,16 @@
     }
     .button-light { background: var(--cream); color: var(--ink); }
 
+    .scroll-progress {
+      position: fixed;
+      z-index: 80;
+      inset: 0 0 auto;
+      height: 2px;
+      background: var(--accent);
+      pointer-events: none;
+      transform: scaleX(0);
+      transform-origin: left;
+    }
     .site-header {
       position: fixed;
       z-index: 50;
@@ -136,6 +147,11 @@
       box-shadow: 0 4px 24px rgba(17, 2, 7, .12);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      transition: background-color 220ms ease, box-shadow 220ms ease;
+    }
+    .site-header.is-scrolled .nav-bar {
+      background: rgba(252, 240, 228, .98);
+      box-shadow: 0 8px 28px rgba(17, 2, 7, .22);
     }
     .nav-logo { flex: 0 0 auto; }
     .nav-logo img { width: auto; height: 30px; }
@@ -156,14 +172,15 @@
       text-decoration: none;
       text-transform: uppercase;
     }
-    .nav-links a span, .mobile-panel a span {
+    .nav-links a span, .mobile-panel a span, .nav-contact span {
       background-image: linear-gradient(currentColor, currentColor);
       background-size: 0 1px;
       background-position: 0 100%;
       background-repeat: no-repeat;
       transition: background-size 220ms ease;
     }
-    .nav-links a:hover span, .mobile-panel a:hover span { background-size: 100% 1px; }
+    .site-header a:hover span,
+    .site-header a[aria-current="location"] span { background-size: 100% 1px; }
     .nav-contact { min-height: 50px; font-size: 13px; }
     .menu-toggle {
       display: none;
@@ -178,16 +195,17 @@
       font-weight: 600;
       letter-spacing: .08em;
       text-transform: uppercase;
-      cursor: pointer;
     }
     .mobile-panel {
+      max-height: calc(100vh - 100px);
+      max-height: calc(100dvh - 100px);
+      overflow: auto;
       margin-top: 8px;
       padding: 12px 24px;
       border-radius: 24px;
       background: var(--cream);
       box-shadow: 0 8px 24px rgba(17, 2, 7, .15);
     }
-    .mobile-panel[hidden] { display: none; }
     .mobile-panel a { display: flex; }
 
     .hero {
@@ -247,6 +265,11 @@
       letter-spacing: -.02em;
       line-height: 1.18;
     }
+    .hero-word {
+      display: inline-block;
+      animation: hero-enter 500ms ease both;
+      animation-delay: calc(var(--i) * 60ms);
+    }
     .hero p {
       max-width: 58ch;
       margin: 24px 0 32px;
@@ -266,6 +289,34 @@
     @keyframes drift-two { to { transform: translate(-10vmax, -10vmax); } }
     @keyframes hero-enter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes pulse { 50% { opacity: .3; } }
+
+    .marquee {
+      overflow: hidden;
+      padding-block: 10px;
+      background: var(--accent);
+      color: var(--cream);
+      font-family: var(--display);
+      font-size: clamp(18px, 2vw, 28px);
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee-scroll 40s linear infinite;
+    }
+    .marquee-group {
+      display: flex;
+      flex: none;
+      justify-content: space-around;
+      min-width: 100vw;
+      gap: 1em;
+      padding-inline: .5em;
+      white-space: nowrap;
+    }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee-scroll { to { transform: translateX(-50%); } }
 
     .editorial-grid {
       display: grid;
@@ -352,9 +403,120 @@
     }
     .service-card p:last-child { margin: 8px 0 0; color: var(--muted); }
 
+    .works { padding-top: 0; }
+    .work-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-block: 36px 28px;
+    }
+    .work-chip {
+      min-height: 44px;
+      padding: 6px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 600;
+      transition: transform 220ms ease, background-color 220ms ease;
+    }
+    .work-chip:hover { transform: translateY(-2px); }
+    .work-chip[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--cream);
+    }
+    .work-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      gap: 28px;
+    }
+    .work-card {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: 20px 20px 4px 4px;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      overflow-wrap: anywhere;
+      transition: transform 220ms ease;
+    }
+    .work-card:hover { transform: translateY(-2px); }
+    .work-thumb {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      border-radius: 20px;
+      background: var(--dark);
+      background-image:
+        radial-gradient(ellipse at 66% 32%, rgba(178, 8, 45, .85), transparent 46%),
+        radial-gradient(ellipse at 66% 74%, rgba(178, 8, 45, .65), transparent 52%),
+        linear-gradient(90deg, var(--dark), var(--dark-2) 43%, var(--dark));
+      color: var(--cream);
+    }
+    .work-fallback {
+      padding: 18px;
+      font-family: var(--display);
+      font-size: clamp(15px, 2.2vw, 30px);
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+    }
+    .work-thumb img, .instagram-tile img, .instagram-tile video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .work-thumb img { transition: transform 250ms ease; }
+    .work-card:hover img, .work-card:focus-visible img { transform: scale(1.04); }
+    .work-play {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      display: grid;
+      width: 64px;
+      height: 64px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--cream);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: opacity 250ms ease;
+    }
+    .work-play::before {
+      margin-left: 4px;
+      border-block: 9px solid transparent;
+      border-left: 15px solid var(--accent);
+      content: "";
+    }
+    .work-card:hover .work-play, .work-card:focus-visible .work-play { opacity: 1; }
+    .work-meta, .work-title, .work-client, .work-description { display: block; }
+    .work-meta {
+      margin-top: 16px;
+      color: var(--muted);
+      font-family: var(--display);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .work-date { text-transform: none; }
+    .work-title { margin: 4px 0 0; font-size: 20px; font-weight: 600; line-height: 1.4; }
+    .work-client, .work-description { margin-top: 4px; color: var(--muted); }
+    .work-more { margin-top: 28px; text-align: center; }
+
     .projects-card {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: center;
       gap: clamp(40px, 6vw, 96px);
       padding: clamp(32px, 6vw, 88px);
@@ -372,6 +534,103 @@
     }
     .projects-copy { margin: 0 0 32px; color: var(--cream-muted); }
     .projects-card picture img { width: 100%; height: auto; border-radius: 16px; }
+    .instagram-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .instagram-tile {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      padding: 0;
+      border: 0;
+      border-radius: 14px;
+      background: radial-gradient(ellipse at 65% 55%, var(--accent), var(--dark-2) 72%);
+      color: var(--cream);
+      transition: transform 220ms ease;
+    }
+    .instagram-tile:hover { transform: translateY(-2px); }
+    .instagram-badge {
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: var(--display);
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .lightbox {
+      width: min(880px, calc(100% - 24px));
+      max-width: none;
+      max-height: calc(100% - 24px);
+      padding: 0;
+      border: 0;
+      border-radius: 20px;
+      background: var(--dark-2);
+      color: var(--cream);
+      overscroll-behavior: contain;
+    }
+    .lightbox::backdrop {
+      background: rgba(17, 2, 7, .88);
+      backdrop-filter: blur(8px);
+    }
+    html:has(.lightbox[open]) { overflow: hidden; }
+    .lightbox-content { position: relative; padding: 60px clamp(16px, 4vw, 32px) 24px; }
+    .lightbox-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      display: grid;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 28px;
+      line-height: 1;
+    }
+    .lightbox-media {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--dark);
+    }
+    .lightbox-media iframe, .lightbox-media video, .lightbox-media img {
+      display: block;
+      width: 100%;
+      border: 0;
+      object-fit: contain;
+    }
+    .lightbox-media iframe { aspect-ratio: 16 / 9; }
+    .lightbox-media video, .lightbox-media img {
+      max-height: min(64vh, 640px);
+      height: auto;
+    }
+    .lightbox-info { margin-top: 16px; overflow-wrap: anywhere; }
+    .lightbox-info h2 { margin: 0; font-size: 20px; line-height: 1.4; }
+    .lightbox-info p { margin: 4px 0 0; color: var(--cream-muted); }
+    .lightbox-link { display: inline-flex; align-items: center; min-height: 44px; }
+    .lightbox-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .lightbox-nav .button { min-height: 44px; padding-inline: 14px; font-size: 12px; }
 
     .faq-list { border-top: 1px solid var(--line); }
     .faq-list details { border-bottom: 1px solid var(--line); }
@@ -426,6 +685,7 @@
       letter-spacing: -.02em;
       line-height: 1;
       text-transform: uppercase;
+      overflow-wrap: anywhere;
     }
     .contact h2 span { display: block; color: var(--accent); }
     .contact p { margin: 28px 0; color: var(--muted); font-size: 18px; }
@@ -444,7 +704,7 @@
       padding-bottom: 56px;
       border-bottom: 1px solid rgba(252, 240, 228, .2);
     }
-    .footer-intro img { width: auto; height: 44px; }
+    .footer-intro img { width: auto; height: 44px; object-fit: contain; object-position: left center; }
     .footer-intro p {
       max-width: 30ch;
       margin: 0;
@@ -482,30 +742,67 @@
       font-size: 14px;
     }
 
-    html.js .reveal {
+    html.has-reveal .reveal {
       opacity: 0;
       transform: translateY(16px);
       transition: opacity 600ms ease, transform 600ms ease;
+      transition-delay: calc(var(--i, 0) * 60ms);
     }
-    html.js .reveal.is-visible { opacity: 1; transform: translateY(0); }
+    html.has-reveal .reveal.is-visible,
+    html.has-reveal .reveal:focus-within { opacity: 1; transform: translateY(0); }
+    html.has-reveal .reveal:focus-within { transition: none; }
 
+    @media (min-width: 700px) {
+      .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1100px) {
+      .work-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .work-item.is-hero-card { grid-column: span 2; }
+    }
+    @media (max-width: 1100px) {
+      .service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 960px) {
+      html.js .nav-links, html.js .nav-contact { display: none; }
+      html.js .menu-toggle { display: inline-flex; align-items: center; }
+      html:not(.js) .site-header {
+        position: relative;
+        top: auto;
+        left: auto;
+        width: auto;
+        padding: 12px 16px;
+        background: var(--dark);
+        transform: none;
+      }
+      html:not(.js) .nav-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px 16px;
+        height: auto;
+        padding: 12px;
+        border-radius: 24px;
+      }
+      html:not(.js) .nav-links { flex-wrap: wrap; gap: 0 12px; }
+    }
     @media (max-width: 899px) {
-      .nav-links, .nav-contact { display: none; }
-      .menu-toggle { display: inline-flex; align-items: center; }
       .editorial-grid { grid-template-columns: 1fr; }
-      .projects-card { grid-template-columns: 1fr; }
+      .projects-card { grid-template-columns: minmax(0, 1fr); }
       .footer-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    @media (max-width: 759px) {
+    @media (max-width: 760px) {
       .steps, .service-grid { grid-template-columns: 1fr; }
       .steps { gap: 32px; }
       .service-grid { gap: 48px; }
+      .instagram-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .footer-intro { align-items: flex-start; flex-direction: column; }
     }
     @media (max-width: 479px) {
       .footer-columns { grid-template-columns: 1fr; }
-      .nav-bar { padding-left: 18px; }
-      .nav-logo img { max-width: 180px; height: auto; max-height: 30px; }
+      .nav-bar { padding-left: 18px; gap: 12px; }
+      .nav-logo img { max-width: clamp(140px, 50vw, 180px); height: auto; max-height: 30px; }
+    }
+    @media (hover: none) {
+      .work-play { opacity: 1; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -513,13 +810,15 @@
         animation: none !important;
         transition: none !important;
       }
-      html.js .reveal { opacity: 1; transform: none; }
+      html.has-reveal .reveal { opacity: 1; transform: none; }
+      .button:hover, .work-chip:hover, .work-card:hover, .instagram-tile:hover,
+      .work-card:hover img, .work-card:focus-visible img,
+      .service-card:hover img { transform: none; }
     }
-      @media (max-width: 1100px) { .service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .service-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
+  <div class="scroll-progress" aria-hidden="true"></div>
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <header class="site-header">
@@ -531,15 +830,17 @@
         <div class="nav-links">
           <a href="#servicios"><span>Servicios</span></a>
           <a href="#proceso"><span>Cómo trabajamos</span></a>
+          <a href="#trabajos" data-works-link hidden><span>Trabajos</span></a>
           <a href="#proyectos"><span>Proyectos</span></a>
           <a href="#preguntas"><span>Preguntas</span></a>
         </div>
-        <a class="button nav-contact" href="#contacto">Contacto</a>
+        <a class="button nav-contact" href="#contacto"><span>Contacto</span></a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu">Menú</button>
       </div>
       <div class="mobile-panel" id="mobile-menu" hidden>
         <a href="#servicios"><span>Servicios</span></a>
         <a href="#proceso"><span>Cómo trabajamos</span></a>
+        <a href="#trabajos" data-works-link hidden><span>Trabajos</span></a>
         <a href="#proyectos"><span>Proyectos</span></a>
         <a href="#preguntas"><span>Preguntas</span></a>
         <a href="#contacto"><span>Contacto</span></a>
@@ -559,6 +860,19 @@
       </div>
       <span class="scroll-cue" aria-hidden="true"></span>
     </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <div class="marquee-group">
+          <span>PUBLICIDAD ✦ VIDEOCLIPS ✦ EVENTOS ✦ CONTENIDO PARA REDES ✦ CONSTRUIMOS HISTORIAS ✦</span>
+          <span>PUBLICIDAD ✦ VIDEOCLIPS ✦ EVENTOS ✦ CONTENIDO PARA REDES ✦ CONSTRUIMOS HISTORIAS ✦</span>
+        </div>
+        <div class="marquee-group">
+          <span>PUBLICIDAD ✦ VIDEOCLIPS ✦ EVENTOS ✦ CONTENIDO PARA REDES ✦ CONSTRUIMOS HISTORIAS ✦</span>
+          <span>PUBLICIDAD ✦ VIDEOCLIPS ✦ EVENTOS ✦ CONTENIDO PARA REDES ✦ CONSTRUIMOS HISTORIAS ✦</span>
+        </div>
+      </div>
+    </div>
 
     <section class="section" id="proceso">
       <div class="container process-inner">
@@ -611,7 +925,7 @@
             </div>
             <p class="service-label">Videoclips</p>
             <h3>Una mirada que dialoga con la música.</h3>
-            <p>Del guion al montaje, buscamos la imagen que pide la canción.</p>
+            <p>Del guion al montaje, buscamos la mirada que pide la canción.</p>
           </article>
           <article class="service-card reveal">
             <div class="service-image">
@@ -633,6 +947,23 @@
       </div>
     </section>
 
+    <section class="section works" id="trabajos" aria-labelledby="trabajos-label" hidden>
+      <div class="container">
+        <div class="editorial-grid reveal">
+          <h2 class="section-label" id="trabajos-label">Trabajos</h2>
+          <p class="editorial-copy">Una selección de lo que hemos producido.</p>
+        </div>
+        <div class="work-filters" role="group" aria-label="Filtrar trabajos por tipo"></div>
+        <div class="work-results">
+          <div class="work-grid" id="lista-trabajos"></div>
+          <div class="work-more" hidden>
+            <button class="button" type="button" aria-controls="lista-trabajos">Ver más trabajos</button>
+          </div>
+        </div>
+        <p class="visually-hidden" id="trabajos-estado" role="status"></p>
+      </div>
+    </section>
+
     <section id="proyectos" class="container">
       <div class="projects-card reveal">
         <div>
@@ -641,10 +972,11 @@
           <p class="projects-copy">Lo publicamos primero en Instagram, en @casab.creative.</p>
           <a class="button button-light" href="https://www.instagram.com/casab.creative/" target="_blank" rel="noopener">Ver en Instagram</a>
         </div>
-        <picture>
+        <picture id="instagram-fallback">
           <source media="(max-width: 760px)" srcset="assets/img/feed-movil.jpg">
           <img src="assets/img/feed.jpg" width="1656" height="1374" alt="Publicaciones de Casa [B] Creative en Instagram" loading="lazy">
         </picture>
+        <div class="instagram-grid" id="instagram-feed" role="group" aria-label="Últimas publicaciones en Instagram" hidden></div>
       </div>
     </section>
 
@@ -712,6 +1044,7 @@
           <ul>
             <li><a class="text-link" href="#servicios">Servicios</a></li>
             <li><a class="text-link" href="#proceso">Cómo trabajamos</a></li>
+            <li data-works-link hidden><a class="text-link" href="#trabajos">Trabajos</a></li>
             <li><a class="text-link" href="#proyectos">Proyectos</a></li>
             <li><a class="text-link" href="#preguntas">Preguntas</a></li>
           </ul>
@@ -730,44 +1063,761 @@
     <div class="legal">© 2026 Casa [B] Creative · Madrid</div>
   </footer>
 
+  <dialog class="lightbox" aria-labelledby="lightbox-title">
+    <div class="lightbox-content">
+      <button class="lightbox-close" type="button" aria-label="Cerrar" autofocus>×</button>
+      <div class="lightbox-media"></div>
+      <div class="lightbox-info" aria-live="polite">
+        <h2 id="lightbox-title"></h2>
+        <p class="lightbox-client" hidden></p>
+        <p class="lightbox-caption" hidden></p>
+        <a class="text-link lightbox-link" target="_blank" rel="noopener" hidden>Ver en Instagram</a>
+      </div>
+      <div class="lightbox-nav" role="group" aria-label="Navegación de la galería" hidden>
+        <button class="button button-light" type="button" data-step="-1">Anterior</button>
+        <button class="button button-light" type="button" data-step="1">Siguiente</button>
+      </div>
+    </div>
+  </dialog>
+
   <script>
+    // Pega aquí el enlace CSV de la hoja publicada (Archivo → Compartir → Publicar en la web → CSV)
+    const SHEET_CSV_URL = "";
+    // Pega aquí el enlace JSON de tu feed de Behold.so (behold.so → conectar Instagram → JSON feed)
+    const INSTAGRAM_FEED_URL = "";
+    const INSTAGRAM_EN_TRABAJOS = true;
+
     (() => {
+      const root = document.documentElement;
+      const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const header = document.querySelector('.site-header');
       const toggle = document.querySelector('.menu-toggle');
       const menu = document.getElementById('mobile-menu');
+      const mobile = window.matchMedia('(max-width: 960px)');
+      const works = document.getElementById('trabajos');
+      const progress = document.querySelector('.scroll-progress');
 
-      toggle.addEventListener('click', () => {
-        const open = toggle.getAttribute('aria-expanded') === 'true';
-        toggle.setAttribute('aria-expanded', String(!open));
-        menu.hidden = open;
-      });
+      function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text) node.textContent = text;
+        return node;
+      }
 
+      function setMenu(open) {
+        menu.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+      }
+
+      toggle.addEventListener('click', () => setMenu(menu.hidden));
       menu.addEventListener('click', (event) => {
-        if (event.target.closest('a')) {
-          menu.hidden = true;
-          toggle.setAttribute('aria-expanded', 'false');
+        const link = event.target.closest('a');
+        if (!link) return;
+        setMenu(false);
+        const destination = document.getElementById(link.hash.slice(1));
+        if (destination) {
+          destination.tabIndex = -1;
+          destination.focus({ preventScroll: true });
         }
       });
-
-      window.addEventListener('resize', () => {
-        if (window.innerWidth >= 900) {
-          menu.hidden = true;
-          toggle.setAttribute('aria-expanded', 'false');
+      header.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !menu.hidden) {
+          setMenu(false);
+          toggle.focus();
         }
       });
+      mobile.addEventListener('change', () => {
+        if (!mobile.matches) setMenu(false);
+      });
+      root.classList.add('js');
 
-      if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const items = document.querySelectorAll('.reveal');
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
+      const heading = document.querySelector('.hero h1');
+      if (!motion.matches) {
+        const text = heading.textContent.trim();
+        heading.setAttribute('aria-label', text);
+        const words = document.createDocumentFragment();
+        text.split(/\s+/).forEach((word, index) => {
+          if (index) words.append(' ');
+          const span = element('span', 'hero-word', word);
+          span.setAttribute('aria-hidden', 'true');
+          span.style.setProperty('--i', index);
+          words.append(span);
+        });
+        heading.replaceChildren(words);
+      }
+
+      let scrollFrame = 0;
+      function updateScroll() {
+        scrollFrame = 0;
+        const top = window.scrollY;
+        const range = root.scrollHeight - root.clientHeight;
+        header.classList.toggle('is-scrolled', top > 40);
+        const fraction = range > 0 ? Math.min(1, Math.max(0, top / range)) : 0;
+        progress.style.transform = `scaleX(${fraction})`;
+      }
+      function queueScrollUpdate() {
+        if (!scrollFrame) scrollFrame = requestAnimationFrame(updateScroll);
+      }
+      window.addEventListener('scroll', queueScrollUpdate, { passive: true });
+      window.addEventListener('resize', queueScrollUpdate);
+      window.addEventListener('load', queueScrollUpdate);
+      if ('ResizeObserver' in window) {
+        new ResizeObserver(queueScrollUpdate).observe(document.body);
+      }
+      updateScroll();
+
+      let revealObserver;
+      let sectionObserver;
+      if ('IntersectionObserver' in window) {
+        if (!motion.matches) {
+          revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(({ target, isIntersecting }) => {
+              if (isIntersecting) {
+                target.classList.add('is-visible');
+                observer.unobserve(target);
+              }
+            });
+          }, { threshold: 0.08 });
+          document.querySelectorAll('.reveal').forEach((node) => revealObserver.observe(node));
+          root.classList.add('has-reveal');
+        }
+
+        const sections = [...document.querySelectorAll('main > section[id]')];
+        const links = [...header.querySelectorAll('a[href^="#"]')];
+        const inView = new Set();
+        sectionObserver = new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) inView.add(target);
+            else inView.delete(target);
+          });
+          const current = [...sections].reverse().find((section) => inView.has(section));
+          links.forEach((link) => {
+            if (current && link.hash === `#${current.id}` && !link.hidden) {
+              link.setAttribute('aria-current', 'location');
+            } else {
+              link.removeAttribute('aria-current');
             }
           });
-        }, { threshold: 0.15 });
+        }, { rootMargin: '-18% 0px -56% 0px' });
+        sections.filter((section) => !section.hidden).forEach((section) => sectionObserver.observe(section));
+      }
 
-        items.forEach((item) => observer.observe(item));
-        document.documentElement.classList.add('js');
+      const types = ['Publicidad', 'Videoclips', 'Eventos', 'Redes', 'Otros'];
+      const featuredValues = new Set(['si', 'x', 'true']);
+      const dateFormatter = new Intl.DateTimeFormat('es-ES', {
+        month: 'short', year: 'numeric', timeZone: 'UTC'
+      });
+
+      function clean(value) {
+        return String(value ?? '').trim();
+      }
+      function fold(value) {
+        return clean(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      }
+      function shorten(value, length) {
+        return [...value].slice(0, length).join('');
+      }
+      function webUrl(value, allowRelative = false) {
+        const text = clean(value);
+        if (!text) return null;
+        try {
+          const url = allowRelative ? new URL(text, document.baseURI) : new URL(text);
+          if (url.protocol === 'https:' || url.protocol === 'http:') return url;
+          if (allowRelative && url.protocol === 'file:' && location.protocol === 'file:' && !/^[a-z][\w+.-]*:/i.test(text)) return url;
+        } catch {}
+        return null;
+      }
+      function asDate(value) {
+        const text = clean(value);
+        const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+        const local = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
+        if (iso || local) {
+          const dateText = iso ? text : `${local[3]}-${local[2]}-${local[1]}`;
+          const time = Date.parse(`${dateText}T00:00:00Z`);
+          return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === dateText
+            ? time : null;
+        }
+        const time = /^\d{4}-\d{2}-\d{2}T/i.test(text) ? Date.parse(text) : NaN;
+        return Number.isFinite(time) ? time : null;
+      }
+      function dateLabel(time) {
+        return dateFormatter.formatToParts(time)
+          .filter(({ type }) => type === 'month' || type === 'year')
+          .map(({ value }) => value.replace(/\.$/, ''))
+          .join(' ');
+      }
+
+      function parseCsv(input) {
+        const csv = input.replace(/^\uFEFF/, '');
+        const rows = [];
+        let row = [];
+        let field = '';
+        let quoted = false;
+
+        function endField() {
+          row.push(field.trim());
+          field = '';
+        }
+        function endRow() {
+          endField();
+          if (row.some(Boolean)) rows.push(row);
+          row = [];
+        }
+
+        for (let index = 0; index < csv.length; index++) {
+          const char = csv[index];
+          if (quoted) {
+            if (char === '"' && csv[index + 1] === '"') {
+              field += '"';
+              index++;
+            } else if (char === '"') {
+              quoted = false;
+            } else {
+              field += char;
+            }
+          } else if (char === '"' && !field.trim()) {
+            field = '';
+            quoted = true;
+          } else if (char === ',') {
+            endField();
+          } else if (char === '\r' || char === '\n') {
+            endRow();
+            if (char === '\r' && csv[index + 1] === '\n') index++;
+          } else {
+            field += char;
+          }
+        }
+
+        if (quoted) throw new Error('Campo CSV sin cerrar');
+        endRow();
+        if (!rows.length) return [];
+        const columns = rows.shift().map(fold);
+        if (!columns.includes('titulo')) throw new Error('Falta la columna titulo');
+        return rows.map((cells) => Object.fromEntries(
+          columns.map((column, index) => [column, cells[index] ?? ''])
+        ));
+      }
+
+      function getVideo(value) {
+        const url = webUrl(value);
+        if (!url) return null;
+        const host = url.hostname.replace(/^(www\.|m\.)/, '');
+        const path = url.pathname.split('/').filter(Boolean);
+        let id;
+        if (host === 'youtu.be') id = path[0];
+        if (host === 'youtube.com') {
+          if (path[0] === 'watch') id = url.searchParams.get('v');
+          if (path[0] === 'shorts') id = path[1];
+        }
+        if (id && /^[\w-]{11}$/.test(id)) {
+          return {
+            kind: 'embed',
+            src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
+            image: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+          };
+        }
+        if (host === 'vimeo.com' && path.length === 1 && /^\d+$/.test(path[0])) {
+          return {
+            kind: 'embed',
+            src: `https://player.vimeo.com/video/${path[0]}?autoplay=1`,
+            vimeoUrl: `https://vimeo.com/${path[0]}`
+          };
+        }
+        return null;
+      }
+
+      function normalizeWork(row) {
+        if (!row || typeof row !== 'object') return null;
+        const title = clean(row.titulo);
+        if (!title) return null;
+        const type = fold(row.tipo);
+        const media = getVideo(row.video);
+        return {
+          title,
+          client: clean(row.cliente),
+          type: types.find((name) => fold(name) === type) || 'Otros',
+          time: asDate(row.fecha),
+          media,
+          image: webUrl(row.imagen, true)?.href || media?.image,
+          featured: featuredValues.has(fold(row.destacado)),
+          description: clean(row.descripcion).replace(/\s+/g, ' ')
+        };
+      }
+
+      async function fetchData(url, format = 'json') {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+          const response = await fetch(url, { signal: controller.signal });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return format === 'text' ? await response.text() : await response.json();
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      async function loadWorks() {
+        if (SHEET_CSV_URL.trim()) {
+          try {
+            return parseCsv(await fetchData(SHEET_CSV_URL.trim(), 'text')).map(normalizeWork).filter(Boolean);
+          } catch {}
+        }
+        try {
+          const rows = await fetchData('proyectos.json');
+          return Array.isArray(rows) ? rows.map(normalizeWork).filter(Boolean) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function normalizePost(post) {
+        if (!post || typeof post !== 'object') return null;
+        const type = clean(post.mediaType).toUpperCase();
+        if (!['VIDEO', 'IMAGE', 'CAROUSEL_ALBUM'].includes(type)) return null;
+        const video = type === 'VIDEO';
+        const source = webUrl(post.mediaUrl)?.href;
+        const preferredImage = webUrl(post.sizes?.medium?.mediaUrl)?.href
+          || webUrl(post.sizes?.large?.mediaUrl)?.href;
+        const image = video
+          ? (preferredImage !== source ? preferredImage : null) || webUrl(post.thumbnailUrl)?.href
+          : preferredImage || source || webUrl(post.thumbnailUrl)?.href;
+        if (video ? !source : !image) return null;
+        const caption = clean(post.caption);
+        const title = shorten(caption.split(/\r\n|\r|\n/)[0].trim(), 60) || (video ? 'Reel de Casa [B] Creative' : 'Publicación de Casa [B] Creative');
+
+        return {
+          id: clean(post.id),
+          title,
+          caption,
+          time: asDate(post.timestamp),
+          image,
+          permalink: webUrl(post.permalink)?.href,
+          media: { kind: video ? 'video' : 'image', src: video ? source : image }
+        };
+      }
+
+      function newestFirst(a, b) {
+        if (a.time === b.time) return 0;
+        return (b.time ?? -Infinity) - (a.time ?? -Infinity);
+      }
+
+      async function loadInstagram() {
+        if (!INSTAGRAM_FEED_URL.trim()) return [];
+        try {
+          const feed = await fetchData(INSTAGRAM_FEED_URL.trim());
+          const posts = Array.isArray(feed) ? feed : feed?.posts;
+          return Array.isArray(posts)
+            ? posts.map(normalizePost).filter(Boolean).sort(newestFirst)
+            : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function instagramWork(post) {
+        const hashtag = fold(post.caption).match(/#(publicidad|videoclips?|eventos?|redes)(?![\p{L}\p{N}_])/u)?.[1];
+        let type = 'Redes';
+        if (hashtag === 'publicidad') type = 'Publicidad';
+        if (hashtag?.startsWith('videoclip')) type = 'Videoclips';
+        if (hashtag?.startsWith('evento')) type = 'Eventos';
+        return { ...post, type, featured: false };
+      }
+
+      const dialog = document.querySelector('.lightbox');
+      const player = dialog.querySelector('.lightbox-media');
+      const closeButton = dialog.querySelector('.lightbox-close');
+      const dialogTitle = document.getElementById('lightbox-title');
+      const dialogClient = dialog.querySelector('.lightbox-client');
+      const dialogCaption = dialog.querySelector('.lightbox-caption');
+      const dialogLink = dialog.querySelector('.lightbox-link');
+      const dialogNav = dialog.querySelector('.lightbox-nav');
+      let dialogItems = [];
+      let dialogIndex = 0;
+      let dialogTrigger = null;
+      let backdropDown = false;
+
+      function releasePlayer() {
+        const media = player.firstElementChild;
+        if (media?.tagName === 'VIDEO') {
+          media.pause();
+          media.removeAttribute('src');
+          media.load();
+        } else if (media?.tagName === 'IFRAME') {
+          media.removeAttribute('src');
+        }
+        player.replaceChildren();
+      }
+
+      function showDialogItem() {
+        const item = dialogItems[dialogIndex];
+        releasePlayer();
+        dialogTitle.textContent = item.title;
+        dialogClient.textContent = item.client || '';
+        dialogClient.hidden = !item.client;
+        dialogCaption.textContent = shorten(item.caption || '', 140);
+        dialogCaption.hidden = !item.caption;
+        dialogLink.hidden = !item.permalink;
+        if (item.permalink) dialogLink.href = item.permalink;
+        else dialogLink.removeAttribute('href');
+
+        let media;
+        if (item.media.kind === 'embed') {
+          media = element('iframe');
+          media.title = `Reproducir vídeo de ${item.title}`;
+          media.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+          media.allowFullscreen = true;
+          media.referrerPolicy = 'strict-origin-when-cross-origin';
+        } else if (item.media.kind === 'video') {
+          media = element('video');
+          media.controls = true;
+          media.autoplay = true;
+          media.playsInline = true;
+          media.setAttribute('aria-label', item.title);
+          if (item.image) media.poster = item.image;
+        } else {
+          media = element('img');
+          media.alt = item.title;
+        }
+        media.src = item.media.src;
+        player.append(media);
+      }
+
+      function openLightbox(item, items, trigger) {
+        dialogItems = items;
+        dialogIndex = items.indexOf(item);
+        dialogTrigger = trigger;
+        dialogNav.hidden = items.length < 2;
+        dialogTitle.textContent = item.title;
+        pausePreviews();
+        dialog.showModal();
+        showDialogItem();
+        closeButton.focus();
+        dialog.scrollTop = 0;
+      }
+      function moveDialog(step) {
+        if (dialogItems.length < 2) return;
+        dialogIndex = (dialogIndex + step + dialogItems.length) % dialogItems.length;
+        showDialogItem();
+      }
+
+      closeButton.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('pointerdown', (event) => {
+        backdropDown = event.target === dialog;
+      });
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog && backdropDown) dialog.close();
+        backdropDown = false;
+      });
+      dialog.addEventListener('close', () => {
+        releasePlayer();
+        dialogItems = [];
+        backdropDown = false;
+        if (dialogTrigger?.isConnected) dialogTrigger.focus({ preventScroll: true });
+        dialogTrigger = null;
+      });
+      dialogNav.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-step]');
+        if (button) moveDialog(Number(button.dataset.step));
+      });
+      dialog.addEventListener('keydown', (event) => {
+        if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey
+          || event.shiftKey || event.target.closest('video, iframe') || dialogItems.length < 2) return;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          moveDialog(event.key === 'ArrowLeft' ? -1 : 1);
+        }
+      });
+
+      const activePreviews = new Set();
+      function pausePreviews() {
+        activePreviews.forEach((video) => {
+          video.pause();
+          video.hidden = true;
+        });
+        activePreviews.clear();
+      }
+      motion.addEventListener('change', () => {
+        if (motion.matches) {
+          pausePreviews();
+          works.querySelectorAll('.work-results, .work-card').forEach((node) => {
+            node.getAnimations?.().forEach((animation) => animation.cancel());
+          });
+        }
+      });
+
+      function thumbnail(src, width, height) {
+        const img = element('img');
+        img.alt = '';
+        img.width = width;
+        img.height = height;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.addEventListener('error', () => img.remove(), { once: true });
+        img.src = src;
+        return img;
+      }
+
+      function createInstagramTile(post, posts, index) {
+        const tile = element('button', 'instagram-tile');
+        tile.type = 'button';
+        tile.setAttribute('aria-haspopup', 'dialog');
+        tile.setAttribute('aria-label', post.media.kind === 'video'
+          ? `Reproducir vídeo de ${post.title}`
+          : `Abrir publicación de Instagram ${index + 1}: ${post.title}`);
+        if (post.id) tile.dataset.postId = post.id;
+        if (post.image) tile.append(thumbnail(post.image, 400, 500));
+        tile.addEventListener('click', () => openLightbox(post, posts, tile));
+
+        if (post.media.kind === 'video') {
+          const badge = element('span', 'instagram-badge', '▶ Reel');
+          badge.setAttribute('aria-hidden', 'true');
+          tile.append(badge);
+          let preview;
+          let hovered = false;
+          let focused = false;
+          let playAttempt = 0;
+
+          function syncPreview(canStart = true) {
+            const shouldPlay = (hovered || focused) && !motion.matches && !dialog.open;
+            if (shouldPlay && canStart) {
+              if (!preview) {
+                preview = element('video');
+                preview.muted = true;
+                preview.defaultMuted = true;
+                preview.loop = true;
+                preview.playsInline = true;
+                preview.setAttribute('aria-hidden', 'true');
+                preview.hidden = true;
+                preview.src = post.media.src;
+                tile.insertBefore(preview, badge);
+              }
+              const attempt = ++playAttempt;
+              activePreviews.add(preview);
+              preview.play().then(() => {
+                if (attempt === playAttempt && activePreviews.has(preview)) preview.hidden = false;
+              }).catch(() => {
+                if (attempt === playAttempt) {
+                  activePreviews.delete(preview);
+                  preview.hidden = true;
+                }
+              });
+            } else if (!shouldPlay && preview) {
+              playAttempt++;
+              activePreviews.delete(preview);
+              preview.pause();
+              preview.hidden = true;
+            }
+          }
+
+          tile.addEventListener('pointerenter', (event) => {
+            if (event.pointerType === 'touch') return;
+            hovered = true;
+            syncPreview();
+          });
+          tile.addEventListener('pointerleave', () => {
+            hovered = false;
+            syncPreview(false);
+          });
+          tile.addEventListener('focus', () => {
+            focused = tile.matches(':focus-visible');
+            if (tile !== dialogTrigger) syncPreview();
+          });
+          tile.addEventListener('blur', () => {
+            focused = false;
+            syncPreview(false);
+          });
+        }
+        return tile;
+      }
+
+      function renderInstagram(posts) {
+        if (!posts.length) return;
+        const latest = posts.slice(0, 6);
+        const feed = document.getElementById('instagram-feed');
+        feed.replaceChildren(...latest.map((post, index) => createInstagramTile(post, latest, index)));
+        document.getElementById('instagram-fallback').hidden = true;
+        feed.hidden = false;
+        queueScrollUpdate();
+      }
+
+      const vimeoImages = new Map();
+      let thumbnailObserver;
+      function loadVimeoImage(thumb) {
+        const url = thumb.dataset.vimeo;
+        if (!url) return;
+        delete thumb.dataset.vimeo;
+        if (!vimeoImages.has(url)) {
+          const request = fetchData(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`)
+            .then((data) => webUrl(data?.thumbnail_url)?.href)
+            .catch(() => null);
+          vimeoImages.set(url, request);
+        }
+        vimeoImages.get(url).then((src) => {
+          if (src) thumb.insertBefore(thumbnail(src, 640, 360), thumb.querySelector('.work-play'));
+        });
+      }
+      if ('IntersectionObserver' in window) {
+        thumbnailObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) {
+              observer.unobserve(target);
+              loadVimeoImage(target);
+            }
+          });
+        }, { rootMargin: '240px 0px' });
+      }
+
+      function createWorkCard(item, getPlaylist) {
+        const wrapper = element('div', 'work-item reveal');
+        const card = element(item.media ? 'button' : 'div', 'work-card');
+        const thumb = element('span', 'work-thumb');
+        thumb.setAttribute('aria-hidden', 'true');
+        thumb.append(element('span', 'work-fallback', item.title));
+        if (item.image) thumb.append(thumbnail(item.image, 640, 360));
+        else if (item.media?.vimeoUrl) thumb.dataset.vimeo = item.media.vimeoUrl;
+        if (item.media) {
+          card.type = 'button';
+          card.setAttribute('aria-haspopup', 'dialog');
+          card.setAttribute('aria-label', `Reproducir vídeo de ${item.title}`);
+          card.addEventListener('click', () => openLightbox(item, getPlaylist(), card));
+          thumb.append(element('span', 'work-play'));
+        }
+
+        const meta = element('span', 'work-meta', item.type);
+        if (item.time !== null) meta.append(' · ', element('span', 'work-date', dateLabel(item.time)));
+        const title = element(item.media ? 'span' : 'h3', 'work-title', item.title);
+        card.append(thumb, meta, title);
+        if (item.client) card.append(element('span', 'work-client', item.client));
+        if (item.description) card.append(element('span', 'work-description', item.description));
+        wrapper.append(card);
+        return wrapper;
+      }
+
+      function renderGallery(items) {
+        if (!items.length) return;
+        items.sort((a, b) => Number(b.featured) - Number(a.featured) || newestFirst(a, b));
+        const filters = works.querySelector('.work-filters');
+        const results = works.querySelector('.work-results');
+        const grid = works.querySelector('.work-grid');
+        const more = works.querySelector('.work-more');
+        const moreButton = more.querySelector('button');
+        const status = document.getElementById('trabajos-estado');
+        const cards = new Map();
+        const chips = new Map();
+        let selected = 'Todos';
+        let filtered = items;
+        let shown = 6;
+        let heightAnimation;
+
+        function getPlaylist() {
+          return filtered.filter((item) => item.media);
+        }
+
+        function addCards(entries, start = 0) {
+          const featured = filtered.find((item) => item.featured);
+          entries.forEach((item, index) => {
+            if (!cards.has(item)) cards.set(item, createWorkCard(item, getPlaylist));
+            const wrapper = cards.get(item);
+            wrapper.classList.toggle('is-hero-card', item === featured);
+            wrapper.style.setProperty('--i', index);
+            grid.append(wrapper);
+            if (!wrapper.classList.contains('is-visible')) revealObserver?.observe(wrapper);
+            const thumb = wrapper.querySelector('[data-vimeo]');
+            if (thumb) {
+              if (thumbnailObserver) thumbnailObserver.observe(thumb);
+              else loadVimeoImage(thumb);
+            }
+            if (start === 0 && selected !== 'Todos' && wrapper.classList.contains('is-visible')
+              && !motion.matches && wrapper.firstElementChild.animate) {
+              wrapper.firstElementChild.animate(
+                [{ opacity: 0, transform: 'scale(.98)' }, { opacity: 1, transform: 'scale(1)' }],
+                { duration: 250, easing: 'ease-out' }
+              );
+            }
+          });
+        }
+
+        function updateMore() {
+          more.hidden = shown >= filtered.length;
+          status.textContent = `${Math.min(shown, filtered.length)} de ${filtered.length} trabajos`;
+          queueScrollUpdate();
+        }
+
+        function selectFilter(type) {
+          if (selected === type) return;
+          const oldHeight = results.getBoundingClientRect().height;
+          heightAnimation?.cancel();
+          selected = type;
+          filtered = type === 'Todos' ? items : items.filter((item) => item.type === type);
+          shown = 6;
+          chips.forEach((chip, name) => chip.setAttribute('aria-pressed', String(name === type)));
+          for (const wrapper of grid.children) {
+            revealObserver?.unobserve(wrapper);
+            const thumb = wrapper.querySelector('[data-vimeo]');
+            if (thumb) thumbnailObserver?.unobserve(thumb);
+          }
+          grid.replaceChildren();
+          addCards(filtered.slice(0, shown));
+          updateMore();
+          if (!motion.matches && results.animate) {
+            const newHeight = results.getBoundingClientRect().height;
+            heightAnimation = results.animate(
+              [{ height: `${oldHeight}px`, overflow: 'clip' }, { height: `${newHeight}px`, overflow: 'clip' }],
+              { duration: 250, easing: 'ease-out' }
+            );
+            if (type === 'Todos') {
+              for (const wrapper of grid.children) {
+                if (wrapper.classList.contains('is-visible')) {
+                  wrapper.firstElementChild.animate(
+                    [{ opacity: 0, transform: 'scale(.98)' }, { opacity: 1, transform: 'scale(1)' }],
+                    { duration: 250, easing: 'ease-out' }
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        const counts = new Map();
+        items.forEach(({ type }) => counts.set(type, (counts.get(type) || 0) + 1));
+        for (const type of ['Todos', ...types.filter((name) => counts.has(name))]) {
+          const count = type === 'Todos' ? items.length : counts.get(type);
+          const chip = element('button', 'work-chip', `${type} ${count}`);
+          chip.type = 'button';
+          chip.setAttribute('aria-pressed', String(type === selected));
+          chip.setAttribute('aria-controls', 'lista-trabajos');
+          chip.addEventListener('click', () => selectFilter(type));
+          chips.set(type, chip);
+          filters.append(chip);
+        }
+        moreButton.addEventListener('click', () => {
+          const previous = shown;
+          shown += 6;
+          addCards(filtered.slice(previous, shown), previous);
+          updateMore();
+          const firstNewCard = cards.get(filtered[previous]).firstElementChild;
+          if (firstNewCard.tagName !== 'BUTTON') firstNewCard.tabIndex = -1;
+          firstNewCard.focus({ preventScroll: true });
+        });
+
+        works.hidden = false;
+        document.querySelectorAll('[data-works-link]').forEach((link) => { link.hidden = false; });
+        sectionObserver?.observe(works);
+        addCards(filtered.slice(0, shown));
+        updateMore();
+        if (location.hash === '#trabajos') works.scrollIntoView({ behavior: 'instant' });
+      }
+
+      const portfolioRequest = loadWorks();
+      const instagramRequest = loadInstagram();
+      instagramRequest.then(renderInstagram);
+      if (INSTAGRAM_EN_TRABAJOS) {
+        Promise.all([portfolioRequest, instagramRequest]).then(([items, posts]) => {
+          const reels = posts.filter((post) => post.media.kind === 'video').map(instagramWork);
+          renderGallery([...items, ...reels]);
+        });
+      } else {
+        portfolioRequest.then(renderGallery);
       }
     })();
   </script>
